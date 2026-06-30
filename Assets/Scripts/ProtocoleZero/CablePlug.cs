@@ -4,6 +4,12 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 namespace ProtocoleZero
 {
+    /// <summary>
+    /// A grabbable rigid cable connector. In VR it is picked up with an
+    /// <see cref="XRGrabInteractable"/> and inserted into a matching
+    /// <see cref="ElectricalSocket"/> (which owns an XRSocketInteractor).
+    /// The socket calls <see cref="Lock"/> to freeze the cable once seated.
+    /// </summary>
     [RequireComponent(typeof(Collider))]
     [RequireComponent(typeof(Rigidbody))]
     public sealed class CablePlug : MonoBehaviour
@@ -26,6 +32,7 @@ namespace ProtocoleZero
 
         public string PlugId => plugId;
         public bool IsLocked => lockedSocket != null;
+        public XRGrabInteractable Grab => grabInteractable;
 
         private void Awake()
         {
@@ -68,7 +75,8 @@ namespace ProtocoleZero
             PlayGrabFeedback();
         }
 
-        public void AttachTo(ElectricalSocket socket)
+        /// <summary>Seat and freeze this plug on a socket. Called by the socket once accepted.</summary>
+        public void Lock(ElectricalSocket socket)
         {
             lockedSocket = socket;
             transform.SetPositionAndRotation(socket.SnapPosition, socket.SnapRotation);
@@ -83,9 +91,19 @@ namespace ProtocoleZero
                 body.isKinematic = true;
             }
 
+            // Once correctly seated the cable stays put: it can no longer be grabbed
+            // or pulled out, which also releases any interactor still holding it.
+            if (grabInteractable != null)
+            {
+                grabInteractable.enabled = false;
+            }
+
             SetColor(lockedColor);
             haptics?.PulseMedium("cable locked");
         }
+
+        // Backwards-compatible alias used by ElectricalSocket.ForceSolved / smoke tests.
+        public void AttachTo(ElectricalSocket socket) => Lock(socket);
 
         private void HandleSelected(SelectEnterEventArgs args)
         {
@@ -104,10 +122,17 @@ namespace ProtocoleZero
         public void ResetPlug()
         {
             lockedSocket = null;
+            if (grabInteractable != null)
+            {
+                grabInteractable.enabled = true;
+            }
+
             transform.SetPositionAndRotation(startPosition, startRotation);
             if (body != null)
             {
                 body.isKinematic = false;
+                body.linearVelocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
             }
 
             SetColor(freeColor);

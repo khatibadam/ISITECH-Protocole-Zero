@@ -1,13 +1,23 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 namespace ProtocoleZero
 {
+    /// <summary>
+    /// An electrical port. Uses the canonical XRI <see cref="XRSocketInteractor"/> so that,
+    /// in VR, a grabbed cable snaps in on release with hover previews handled by XRI.
+    /// This component observes the socket: a matching cable latches the port solved, a
+    /// wrong cable is ejected back to its start with a stress/red-flash feedback.
+    /// </summary>
     [RequireComponent(typeof(Collider))]
     public sealed class ElectricalSocket : MonoBehaviour
     {
         [SerializeField] private string targetPlugId = "A";
         [SerializeField] private Transform snapPoint;
         [SerializeField] private ElectricalPanelPuzzle puzzle;
+        [SerializeField] private XRSocketInteractor socketInteractor;
         [SerializeField] private Renderer feedbackRenderer;
         [SerializeField] private Light feedbackLight;
         [SerializeField] private Color idleColor = Color.yellow;
@@ -16,6 +26,7 @@ namespace ProtocoleZero
 
         private bool solved;
         private MaterialPropertyBlock feedbackBlock;
+        private CablePlug pendingEject;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
@@ -28,6 +39,16 @@ namespace ProtocoleZero
         {
             feedbackBlock = new MaterialPropertyBlock();
 
+            if (socketInteractor == null)
+            {
+                socketInteractor = GetComponent<XRSocketInteractor>();
+            }
+
+            if (socketInteractor != null && snapPoint != null)
+            {
+                socketInteractor.attachTransform = snapPoint;
+            }
+
             Collider trigger = GetComponent<Collider>();
             trigger.isTrigger = true;
 
@@ -39,9 +60,30 @@ namespace ProtocoleZero
             SetFeedback(idleColor);
         }
 
-        private void OnTriggerEnter(Collider other)
+        private void OnEnable()
         {
-            CablePlug plug = other.GetComponentInParent<CablePlug>();
+            if (socketInteractor != null)
+            {
+                socketInteractor.selectEntered.AddListener(HandleSocketed);
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (socketInteractor != null)
+            {
+                socketInteractor.selectEntered.RemoveListener(HandleSocketed);
+            }
+        }
+
+        private void HandleSocketed(SelectEnterEventArgs args)
+        {
+            if (solved || args.interactableObject == null)
+            {
+                return;
+            }
+
+            CablePlug plug = args.interactableObject.transform.GetComponentInParent<CablePlug>();
             TryAccept(plug);
         }
 
@@ -55,15 +97,44 @@ namespace ProtocoleZero
             if (plug.PlugId == targetPlugId)
             {
                 solved = true;
-                plug.AttachTo(this);
+                plug.Lock(this);
                 SetFeedback(solvedColor);
                 puzzle?.NotifySocketSolved(this);
                 return true;
             }
 
+            // Wrong cable: bounce it back out on the next frame so we don't mutate
+            // interaction state from inside the select callback.
             SetFeedback(wrongColor);
+            pendingEject = plug;
             puzzle?.NotifyWrongSocket(this);
             return false;
+        }
+
+        private void Update()
+        {
+            if (pendingEject != null)
+            {
+                CablePlug plug = pendingEject;
+                pendingEject = null;
+
+                // If the plug meanwhile found its correct home, leave it seated.
+                if (!plug.IsLocked)
+                {
+                    if (socketInteractor != null && socketInteractor.IsSelecting(plug.Grab))
+                    {
+                        socketInteractor.interactionManager.SelectExit(
+                            (IXRSelectInteractor)socketInteractor, plug.Grab);
+                    }
+
+                    plug.ResetPlug();
+                }
+
+                if (!solved)
+                {
+                    SetFeedback(idleColor);
+                }
+            }
         }
 
         public void ForceSolved(CablePlug plug)
@@ -76,7 +147,7 @@ namespace ProtocoleZero
             solved = true;
             if (plug != null)
             {
-                plug.AttachTo(this);
+                plug.Lock(this);
             }
 
             SetFeedback(solvedColor);
