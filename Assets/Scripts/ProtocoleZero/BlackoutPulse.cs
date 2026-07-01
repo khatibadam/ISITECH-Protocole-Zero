@@ -1,13 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace ProtocoleZero
 {
     /// <summary>
-    /// One-shot power "brown-out": briefly cuts all scene lights, flickers, then restores them.
-    /// Designed to be invoked from a puzzle's onSolved UnityEvent (e.g. the INFO electrical panel)
-    /// for a horror beat. Captures each light's intensity at trigger time so it is non-destructive.
+    /// One-shot power "brown-out" horror beat. Darkens the whole rendered image via the
+    /// horror volume's ColorAdjustments.postExposure (so it works with BAKED lighting too,
+    /// not just realtime) AND cuts any remaining realtime, non-directional lights for extra
+    /// flicker, then restores both. Fire it from a puzzle's onSolved event or let it watch a
+    /// puzzle's IsSolved. Non-destructive: original exposure and light intensities are captured.
     /// </summary>
     public sealed class BlackoutPulse : MonoBehaviour
     {
@@ -16,9 +20,14 @@ namespace ProtocoleZero
         [SerializeField] private AudioSource stinger;
         [Tooltip("Optional: fire the blackout once this puzzle becomes solved.")]
         [SerializeField] private ElectricalPanelPuzzle watchedPuzzle;
+        [Tooltip("Horror post-processing volume. Auto-found if left empty.")]
+        [SerializeField] private Volume postVolume;
+        [Tooltip("Exposure (EV) applied at the darkest point of the blackout.")]
+        [SerializeField] private float darkExposure = -6f;
 
         private bool running;
         private bool firedFromPuzzle;
+        private ColorAdjustments colorAdjust;
 
         private void Update()
         {
@@ -39,9 +48,41 @@ namespace ProtocoleZero
             StartCoroutine(Pulse());
         }
 
+        private ColorAdjustments ResolveColorAdjustments()
+        {
+            if (colorAdjust != null)
+            {
+                return colorAdjust;
+            }
+
+            if (postVolume == null)
+            {
+                foreach (var v in FindObjectsByType<Volume>(FindObjectsSortMode.None))
+                {
+                    if (v.isGlobal && v.sharedProfile != null)
+                    {
+                        postVolume = v;
+                        break;
+                    }
+                }
+            }
+
+            // volume.profile is a runtime clone; editing it never touches the shared asset.
+            if (postVolume != null && postVolume.profile != null &&
+                postVolume.profile.TryGet(out ColorAdjustments ca))
+            {
+                colorAdjust = ca;
+            }
+
+            return colorAdjust;
+        }
+
         private IEnumerator Pulse()
         {
             running = true;
+
+            ColorAdjustments ca = ResolveColorAdjustments();
+            float baseExposure = ca != null ? ca.postExposure.value : 0f;
 
             Light[] lights = FindObjectsByType<Light>(FindObjectsSortMode.None);
             var captured = new List<(Light light, float intensity)>(lights.Length);
@@ -59,17 +100,19 @@ namespace ProtocoleZero
                 stinger.Play();
             }
 
-            // hard cut
+            // hard cut: dark exposure + kill realtime lights
+            if (ca != null) ca.postExposure.value = baseExposure + darkExposure;
             foreach (var c in captured)
             {
                 c.light.intensity = 0f;
             }
 
-            // a couple of stutter flashes during the blackout
+            // stutter flashes during the blackout
             float t = 0f;
             while (t < blackoutSeconds)
             {
                 float flash = (Random.value < 0.25f) ? 0.25f : 0f;
+                if (ca != null) ca.postExposure.value = baseExposure + darkExposure * (1f - flash);
                 foreach (var c in captured)
                 {
                     c.light.intensity = c.intensity * flash;
@@ -86,6 +129,7 @@ namespace ProtocoleZero
             {
                 r += Time.deltaTime;
                 float k = Mathf.Clamp01(r / recoverSeconds);
+                if (ca != null) ca.postExposure.value = baseExposure + darkExposure * (1f - k);
                 foreach (var c in captured)
                 {
                     c.light.intensity = c.intensity * k;
@@ -94,6 +138,7 @@ namespace ProtocoleZero
                 yield return null;
             }
 
+            if (ca != null) ca.postExposure.value = baseExposure;
             foreach (var c in captured)
             {
                 c.light.intensity = c.intensity;
