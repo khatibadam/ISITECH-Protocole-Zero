@@ -53,12 +53,15 @@ namespace ProtocoleZero.EditorTools
             MusicAnchorController music = systemsRoot.AddComponent<MusicAnchorController>();
             EntityDirector entityDirector = systemsRoot.AddComponent<EntityDirector>();
             ProtocoleZeroGameFlow flow = systemsRoot.AddComponent<ProtocoleZeroGameFlow>();
+            MissionTimer mission = systemsRoot.AddComponent<MissionTimer>();
 
             SetObj(comfort, "stressDirector", stress);
             SetObj(battery, "stressDirector", stress);
             SetObj(battery, "subtitles", subtitles);
             SetObj(music, "stressDirector", stress);
             SetObj(music, "subtitles", subtitles);
+            SetObj(mission, "stressDirector", stress);
+            SetObj(mission, "subtitles", subtitles);
 
             GameObject xrRig = InstantiatePrefab("Assets/Samples/XR Interaction Toolkit/3.2.1/Starter Assets/Prefabs/XR Origin (XR Rig).prefab", playerRoot.transform);
             if (xrRig == null)
@@ -124,6 +127,8 @@ namespace ProtocoleZero.EditorTools
             SetObj(wristUi, "musicAnchor", music);
             SetObj(wristUi, "batteryTimer", battery);
             SetObj(wristUi, "gameFlow", flow);
+            SetObj(wristUi, "missionTimer", mission);
+            SetObj(flow, "missionTimer", mission);
 
             GameObject pcAudio = new GameObject("Mars_PC_Playlist_AudioSource");
             pcAudio.transform.SetParent(gameplayRoot.transform, false);

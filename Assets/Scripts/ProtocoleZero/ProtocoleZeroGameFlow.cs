@@ -8,6 +8,7 @@ namespace ProtocoleZero
         [SerializeField] private TwoHandDoor finalDoor;
         [SerializeField] private MusicAnchorController musicAnchor;
         [SerializeField] private BatteryTimer batteryTimer;
+        [SerializeField] private MissionTimer missionTimer;
         [SerializeField] private StressDirector stressDirector;
         [SerializeField] private EntityDirector entityDirector;
         [SerializeField] private SubtitleManager subtitles;
@@ -44,6 +45,11 @@ namespace ProtocoleZero
             if (batteryTimer == null)
             {
                 batteryTimer = FindFirstObjectByType<BatteryTimer>();
+            }
+
+            if (missionTimer == null)
+            {
+                missionTimer = MissionTimer.EnsureInstance();
             }
 
             if (stressDirector == null)
@@ -113,6 +119,7 @@ namespace ProtocoleZero
 
             stressDirector?.Calm(100f, "ending");
             entityDirector?.RegisterPuzzleSolved();
+            missionTimer?.Pause();
             UpdatePcScreen();
             subtitles?.ShowLine("Le batiment n'etait pas ferme. Tu peux rentrer.", 6f);
         }
@@ -146,7 +153,8 @@ namespace ProtocoleZero
             int battery = batteryTimer != null ? Mathf.RoundToInt(batteryTimer.BatteryPercent) : 97;
             string music = musicAnchor != null && musicAnchor.IsMusicAwake ? "PLAYLIST ACTIVE" : "VEILLE";
             string stress = stressDirector != null ? stressDirector.Stage.ToString().ToUpperInvariant() : "ANCHORED";
-            pcScreenText.text = "ISITECH PROTOCOLE ZERO\n" + music + " / " + battery + "%\n" + currentObjective + "\nEtat interne : " + stress;
+            string clock = missionTimer != null ? missionTimer.FormattedTime : "--:--";
+            pcScreenText.text = "ISITECH PROTOCOLE ZERO\nTEMPS " + clock + "\n" + music + " / " + battery + "%\n" + currentObjective + "\nEtat interne : " + stress;
         }
 
         private int CountRequiredPuzzles()

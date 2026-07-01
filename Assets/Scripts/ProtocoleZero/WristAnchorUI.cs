@@ -9,6 +9,7 @@ namespace ProtocoleZero
         [SerializeField] private MusicAnchorController musicAnchor;
         [SerializeField] private BatteryTimer batteryTimer;
         [SerializeField] private ProtocoleZeroGameFlow gameFlow;
+        [SerializeField] private MissionTimer missionTimer;
 
         private void Awake()
         {
@@ -31,6 +32,11 @@ namespace ProtocoleZero
             {
                 gameFlow = FindFirstObjectByType<ProtocoleZeroGameFlow>();
             }
+
+            if (missionTimer == null)
+            {
+                missionTimer = MissionTimer.EnsureInstance();
+            }
         }
 
         private void Update()
@@ -40,12 +46,27 @@ namespace ProtocoleZero
                 return;
             }
 
+            string clock = missionTimer != null ? "TEMPS " + missionTimer.FormattedTime : "TEMPS --:--";
             string heart = stressDirector != null ? StressLabel(stressDirector.Stage) : "COEUR ?";
-            string music = musicAnchor != null && musicAnchor.IsMusicAwake ? "MUSIQUE ON" : "MUSIQUE OFF";
+
+            string music;
+            if (musicAnchor == null)
+            {
+                music = "MUSIQUE ?";
+            }
+            else if (musicAnchor.IsMusicAwake)
+            {
+                music = "MUSIQUE " + MissionTimer.Format(musicAnchor.RemainingSeconds);
+            }
+            else
+            {
+                music = "MUSIQUE VEILLE";
+            }
+
             string battery = batteryTimer != null ? Mathf.RoundToInt(batteryTimer.BatteryPercent) + "%" : "--%";
             string objective = gameFlow != null ? gameFlow.CurrentObjective : "Mars";
 
-            wristText.text = heart + "\n" + music + "  " + battery + "\n" + objective;
+            wristText.text = clock + "\n" + heart + "\n" + music + "  " + battery + "\n" + objective;
         }
 
         private static string StressLabel(StressStage stage)
