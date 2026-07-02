@@ -220,6 +220,13 @@ namespace ProtocoleZero
                     return;
                 }
 
+                Flashlight flashlight = hit.collider.GetComponentInParent<Flashlight>();
+                if (flashlight != null)
+                {
+                    flashlight.Toggle();
+                    return;
+                }
+
                 TwoHandDoorHandle handle = hit.collider.GetComponentInParent<TwoHandDoorHandle>();
                 if (handle != null)
                 {
