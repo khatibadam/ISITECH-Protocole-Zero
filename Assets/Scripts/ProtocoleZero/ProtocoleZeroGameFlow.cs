@@ -73,11 +73,6 @@ namespace ProtocoleZero
             }
         }
 
-        private void Start()
-        {
-            subtitles?.ShowLine("Deadline rendue. Trouve le courant. Reste avec la musique.", 4f);
-        }
-
         private void Update()
         {
             if (!endingTriggered)

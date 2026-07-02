@@ -146,7 +146,6 @@ namespace ProtocoleZero
             started = true;
             audioFeedback?.PlayPcWake();
             haptics?.PulseMedium("tutorial start");
-            subtitles?.ShowLine("Reveille le PC : la musique est ton ancre.", 4.5f);
 
             if (boardRoot != null)
             {
