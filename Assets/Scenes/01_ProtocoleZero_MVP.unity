@@ -58759,9 +58759,9 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 47a7bad964884764a9e2dd02abdb1f08, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.4
   m_Pitch: 1
-  Loop: 0
+  Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -61428,7 +61428,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProtocoleZero.FootstepAudio
   footstepClip: {fileID: 8300000, guid: d4e8b2c3f6a75d90ab1c2d3e4f5a6b72, type: 3}
-  volume: 0.5
+  volume: 0.25
   minSpeed: 0.3
   teleportDelta: 0.75
   fadeSpeed: 6
