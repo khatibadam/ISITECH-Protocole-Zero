@@ -24,6 +24,8 @@ namespace ProtocoleZero
         [SerializeField] private Volume postVolume;
         [Tooltip("Exposure (EV) applied at the darkest point of the blackout.")]
         [SerializeField] private float darkExposure = -6f;
+        [Tooltip("Optional: rumble the VR controllers during the blackout. Auto-found if left empty.")]
+        [SerializeField] private HapticFeedbackRouter haptics;
 
         private bool running;
         private bool firedFromPuzzle;
@@ -94,11 +96,18 @@ namespace ProtocoleZero
                 }
             }
 
+            if (haptics == null)
+            {
+                haptics = FindFirstObjectByType<HapticFeedbackRouter>();
+            }
+
             if (stinger != null)
             {
                 stinger.Stop();
                 stinger.Play();
             }
+
+            haptics?.Pulse(0.85f, 0.3f, "blackout-cut");
 
             // hard cut: dark exposure + kill realtime lights
             if (ca != null) ca.postExposure.value = baseExposure + darkExposure;
@@ -119,6 +128,7 @@ namespace ProtocoleZero
                 }
 
                 float step = Random.Range(0.04f, 0.12f);
+                haptics?.Pulse(flash > 0f ? 0.45f : 0.2f, step, "blackout-stutter");
                 t += step;
                 yield return new WaitForSeconds(step);
             }

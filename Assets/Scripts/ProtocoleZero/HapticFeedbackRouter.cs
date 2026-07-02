@@ -1,13 +1,10 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Haptics;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.XR;
 
 namespace ProtocoleZero
 {
-    /// <summary>
-    /// Routes gameplay pulses to the real XRI haptic channels of both controllers.
-    /// Light/Medium/Strong map to amplitude/duration pairs kept deliberately gentle
-    /// (horror context: haptics should underline, not startle by themselves).
-    /// </summary>
     public sealed class HapticFeedbackRouter : MonoBehaviour
     {
         [SerializeField, Range(0f, 1f)] private float globalIntensity = 1f;
@@ -51,18 +48,34 @@ namespace ProtocoleZero
         public void Pulse(float amplitude, float duration, string label)
         {
             amplitude = Mathf.Clamp01(amplitude * globalIntensity);
-            if (amplitude <= 0f)
+
+            if (logPulses)
+            {
+                Debug.Log($"[Haptics] {label} amp={amplitude:0.00} duration={duration:0.00}");
+            }
+
+            if (amplitude <= 0f || duration <= 0f)
+            {
+                return;
+            }
+
+            bool sentViaRumble = false;
+            foreach (InputDevice device in InputSystem.devices)
+            {
+                if (device is XRControllerWithRumble rumble && device.added)
+                {
+                    rumble.SendImpulse(amplitude, duration);
+                    sentViaRumble = true;
+                }
+            }
+
+            if (sentViaRumble)
             {
                 return;
             }
 
             leftHand?.SendHapticImpulse(amplitude, duration);
             rightHand?.SendHapticImpulse(amplitude, duration);
-
-            if (logPulses)
-            {
-                Debug.Log($"[Haptics] {label} amp={amplitude:0.00} duration={duration:0.00}");
-            }
         }
     }
 }
