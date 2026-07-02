@@ -17,7 +17,9 @@ namespace ProtocoleZero
             ModeTeleport = 0,
             ModeContinuous = 1,
             ModeBoth = 2,
-            Start = 3
+            Start = 3,
+            ToggleSeated = 4,
+            ToggleSubtitles = 5
         }
 
         [SerializeField] private Option option;

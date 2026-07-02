@@ -93,15 +93,11 @@ namespace ProtocoleZero
             }
         }
 
-        public void TriggerEnding()
+        // Visual reveal only (warm light + set dressing beyond the door). Called when the
+        // final door opens so the player SEES the truth, without committing the ending
+        // state: the real ending starts when they walk through (EndingTrigger/elevator).
+        public void ShowReveal()
         {
-            if (endingTriggered)
-            {
-                return;
-            }
-
-            endingTriggered = true;
-            currentObjective = "Sortie ouverte";
             revealGroup?.SetActive(true);
 
             if (revealLights != null)
@@ -116,6 +112,18 @@ namespace ProtocoleZero
                     }
                 }
             }
+        }
+
+        public void TriggerEnding()
+        {
+            if (endingTriggered)
+            {
+                return;
+            }
+
+            endingTriggered = true;
+            currentObjective = "Sortie ouverte";
+            ShowReveal();
 
             stressDirector?.Calm(100f, "ending");
             entityDirector?.RegisterPuzzleSolved();

@@ -76,7 +76,7 @@ namespace ProtocoleZero
             }
 
             haptics?.PulseMedium("socket ok");
-            audioFeedback?.PlaySocketCorrect();
+            audioFeedback?.PlaySocketCorrect(socket != null ? socket.transform.position : transform.position);
             SetPanelFeedback(Color.cyan, "BT " + puzzleId + " / Signal OK");
             if (AllSocketsSolved())
             {
@@ -92,7 +92,7 @@ namespace ProtocoleZero
             }
 
             haptics?.PulseLight("socket wrong");
-            audioFeedback?.PlaySocketWrong();
+            audioFeedback?.PlaySocketWrong(socket != null ? socket.transform.position : transform.position);
             stressDirector?.AddStress(6f, "wrong cable");
             subtitles?.ShowLine("Mauvais connecteur. Regarde les couleurs.", 2.5f);
             SetPanelFeedback(Color.red, "BT " + puzzleId + " / Erreur");

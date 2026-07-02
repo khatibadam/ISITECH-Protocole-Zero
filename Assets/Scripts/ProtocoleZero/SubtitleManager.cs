@@ -9,6 +9,18 @@ namespace ProtocoleZero
         [SerializeField] private float defaultDuration = 3.5f;
 
         private Coroutine hideRoutine;
+        private bool subtitlesEnabled = true;
+
+        public bool SubtitlesEnabled => subtitlesEnabled;
+
+        public void SetEnabled(bool enabled)
+        {
+            subtitlesEnabled = enabled;
+            if (!enabled && textTarget != null)
+            {
+                textTarget.text = string.Empty;
+            }
+        }
 
         private void Awake()
         {
@@ -25,6 +37,11 @@ namespace ProtocoleZero
 
         public void ShowLine(string line, float duration)
         {
+            if (!subtitlesEnabled)
+            {
+                return;
+            }
+
             if (textTarget == null)
             {
                 Debug.Log("[Subtitle] " + line);

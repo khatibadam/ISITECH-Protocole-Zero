@@ -27,6 +27,7 @@ namespace ProtocoleZero
 
         private bool powered;
         private bool doorOpen;
+        private bool cabinReady;
         private bool departed;
         private Vector3 doorClosedPos;
         private Vector3 splitClosedPos;
@@ -111,7 +112,9 @@ namespace ProtocoleZero
 
         public void PlayerEnteredCabin()
         {
-            if (!doorOpen || departed || ending == null || ending.EndingStarted)
+            // cabinReady only turns true once the door has finished sliding open, so a
+            // player clipping the sensor through a half-open door can never soft-lock.
+            if (!cabinReady || departed || ending == null || ending.EndingStarted)
             {
                 return;
             }
@@ -159,6 +162,11 @@ namespace ProtocoleZero
             if (doorSplit != null)
             {
                 doorSplit.localPosition = splitTarget;
+            }
+
+            if (open)
+            {
+                cabinReady = true;
             }
         }
 

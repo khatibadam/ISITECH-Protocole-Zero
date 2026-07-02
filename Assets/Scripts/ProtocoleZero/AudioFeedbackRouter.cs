@@ -34,14 +34,29 @@ namespace ProtocoleZero
             Play(cableGrabClip, 0.45f);
         }
 
+        public void PlayCableGrab(Vector3 position)
+        {
+            PlayAt(cableGrabClip, 0.5f, position);
+        }
+
         public void PlaySocketCorrect()
         {
             Play(socketCorrectClip, 0.75f);
         }
 
+        public void PlaySocketCorrect(Vector3 position)
+        {
+            PlayAt(socketCorrectClip, 0.8f, position);
+        }
+
         public void PlaySocketWrong()
         {
             Play(socketWrongClip, 0.8f);
+        }
+
+        public void PlaySocketWrong(Vector3 position)
+        {
+            PlayAt(socketWrongClip, 0.85f, position);
         }
 
         public void PlayPcWake()
@@ -52,6 +67,11 @@ namespace ProtocoleZero
         public void PlayFinalDoorOpen()
         {
             Play(finalDoorOpenClip, 0.95f);
+        }
+
+        public void PlayFinalDoorOpen(Vector3 position)
+        {
+            PlayAt(finalDoorOpenClip, 1f, position);
         }
 
         public void PlayBraceletPulse()
@@ -67,6 +87,41 @@ namespace ProtocoleZero
             }
 
             oneShotSource.PlayOneShot(clip, Mathf.Clamp01(volume * gain));
+        }
+
+        // Physical interactions (cables, sockets, door) play from their world position
+        // so the sound is localizable in the headset. Small round-robin pool: no GC.
+        private AudioSource[] spatialPool;
+        private int nextSpatial;
+
+        private void PlayAt(AudioClip clip, float gain, Vector3 position)
+        {
+            if (clip == null)
+            {
+                return;
+            }
+
+            if (spatialPool == null)
+            {
+                spatialPool = new AudioSource[3];
+                for (int i = 0; i < spatialPool.Length; i++)
+                {
+                    var go = new GameObject("SpatialOneShot_" + i);
+                    go.transform.SetParent(transform, false);
+                    var src = go.AddComponent<AudioSource>();
+                    src.playOnAwake = false;
+                    src.spatialBlend = 1f;
+                    src.rolloffMode = AudioRolloffMode.Linear;
+                    src.minDistance = 0.4f;
+                    src.maxDistance = 8f;
+                    spatialPool[i] = src;
+                }
+            }
+
+            AudioSource s = spatialPool[nextSpatial];
+            nextSpatial = (nextSpatial + 1) % spatialPool.Length;
+            s.transform.position = position;
+            s.PlayOneShot(clip, Mathf.Clamp01(volume * gain));
         }
     }
 }

@@ -18,12 +18,17 @@ namespace ProtocoleZero
         [SerializeField] private Renderer continuousButtonRenderer;
         [SerializeField] private Renderer bothButtonRenderer;
         [SerializeField] private GameObject boardRoot;
+        [SerializeField] private ComfortSettingsManager comfort;
+        [SerializeField] private TextMesh seatedLabel;
+        [SerializeField] private TextMesh subtitlesLabel;
         [SerializeField] private Color selectedColor = new Color(0.15f, 0.85f, 0.75f);
         [SerializeField] private Color unselectedColor = new Color(0.22f, 0.26f, 0.33f);
 
         private MaterialPropertyBlock block;
         private bool started;
         private bool highlightInitialized;
+        private bool seatedOn;
+        private bool subtitlesOn = true;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
@@ -91,6 +96,39 @@ namespace ProtocoleZero
                     break;
                 case TutorialOptionButton.Option.Start:
                     StartGame();
+                    break;
+                case TutorialOptionButton.Option.ToggleSeated:
+                    seatedOn = !seatedOn;
+                    if (comfort == null)
+                    {
+                        comfort = FindFirstObjectByType<ComfortSettingsManager>();
+                    }
+
+                    comfort?.SetSeated(seatedOn);
+                    if (seatedLabel != null)
+                    {
+                        seatedLabel.text = "ASSIS : " + (seatedOn ? "OUI" : "NON");
+                    }
+
+                    audioFeedback?.PlayBraceletPulse();
+                    subtitles?.ShowLine(seatedOn ? "Mode assis : hauteur ajustee." : "Mode debout retabli.", 2.5f);
+                    break;
+                case TutorialOptionButton.Option.ToggleSubtitles:
+                    subtitlesOn = !subtitlesOn;
+                    if (comfort == null)
+                    {
+                        comfort = FindFirstObjectByType<ComfortSettingsManager>();
+                    }
+
+                    comfort?.SetSubtitles(subtitlesOn);
+                    if (subtitlesLabel != null)
+                    {
+                        subtitlesLabel.text = "SOUS-TITRES : " + (subtitlesOn ? "OUI" : "NON");
+                    }
+
+                    audioFeedback?.PlayBraceletPulse();
+                    // only displays when subtitles were just re-enabled
+                    subtitles?.ShowLine("Sous-titres actives.", 2f);
                     break;
             }
         }

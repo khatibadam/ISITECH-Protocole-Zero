@@ -114,7 +114,7 @@ namespace ProtocoleZero
         {
             if (!IsLocked)
             {
-                audioFeedback?.PlayCableGrab();
+                audioFeedback?.PlayCableGrab(transform.position);
                 haptics?.PulseLight("cable grab");
             }
         }

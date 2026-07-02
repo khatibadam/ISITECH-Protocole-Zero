@@ -102,9 +102,11 @@ namespace ProtocoleZero
             }
 
             subtitles?.ShowLine("La sortie etait ouverte.", 4f);
-            audioFeedback?.PlayFinalDoorOpen();
+            audioFeedback?.PlayFinalDoorOpen(doorPivot.position);
             haptics?.PulseStrong("door open");
-            gameFlow?.TriggerEnding();
+            // Only show what's beyond the door; the ending itself starts when the
+            // player physically crosses the threshold (EndingTrigger).
+            gameFlow?.ShowReveal();
         }
     }
 }
