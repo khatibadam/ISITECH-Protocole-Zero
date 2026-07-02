@@ -27,6 +27,7 @@ namespace ProtocoleZero
         private bool solved;
         private MaterialPropertyBlock feedbackBlock;
         private CablePlug pendingEject;
+        private IXRSelectInteractable pendingReject;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
@@ -78,12 +79,24 @@ namespace ProtocoleZero
 
         private void HandleSocketed(SelectEnterEventArgs args)
         {
-            if (solved || args.interactableObject == null)
+            if (args.interactableObject == null)
             {
                 return;
             }
 
             CablePlug plug = args.interactableObject.transform.GetComponentInParent<CablePlug>();
+            if (plug == null)
+            {
+                pendingReject = args.interactableObject;
+                SetFeedback(wrongColor);
+                return;
+            }
+
+            if (solved)
+            {
+                return;
+            }
+
             TryAccept(plug);
         }
 
@@ -113,6 +126,23 @@ namespace ProtocoleZero
 
         private void Update()
         {
+            if (pendingReject != null)
+            {
+                IXRSelectInteractable interactable = pendingReject;
+                pendingReject = null;
+
+                if (socketInteractor != null && socketInteractor.IsSelecting(interactable))
+                {
+                    socketInteractor.interactionManager.SelectExit(
+                        (IXRSelectInteractor)socketInteractor, interactable);
+                }
+
+                if (!solved)
+                {
+                    SetFeedback(idleColor);
+                }
+            }
+
             if (pendingEject != null)
             {
                 CablePlug plug = pendingEject;
