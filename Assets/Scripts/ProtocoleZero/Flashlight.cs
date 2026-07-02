@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 namespace ProtocoleZero
 {
@@ -15,10 +17,17 @@ namespace ProtocoleZero
         [SerializeField] private InputActionProperty toggleAction;
         [SerializeField] private bool startsOn;
         [SerializeField] private AudioSource clickSource;
+        [SerializeField] private bool enableGlobalInput = true;
+        [SerializeField] private XRGrabInteractable grabInteractable;
+        [SerializeField] private Renderer stateRenderer;
+        [SerializeField] private HapticFeedbackRouter haptics;
 
         private bool isOn;
         private InputAction activeAction;
         private bool ownsAction;
+        private MaterialPropertyBlock block;
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
 
         private void Awake()
         {
@@ -27,12 +36,34 @@ namespace ProtocoleZero
                 spotLight = GetComponent<Light>();
             }
 
+            if (grabInteractable == null)
+            {
+                grabInteractable = GetComponent<XRGrabInteractable>();
+            }
+
+            if (haptics == null)
+            {
+                haptics = FindFirstObjectByType<HapticFeedbackRouter>();
+            }
+
+            block = new MaterialPropertyBlock();
             isOn = startsOn;
             ApplyState();
         }
 
         private void OnEnable()
         {
+            if (grabInteractable != null)
+            {
+                grabInteractable.activated.AddListener(OnGrabActivated);
+                grabInteractable.selectEntered.AddListener(OnSelected);
+            }
+
+            if (!enableGlobalInput)
+            {
+                return;
+            }
+
             InputAction userAction = toggleAction.action;
             if (userAction != null && userAction.bindings.Count > 0)
             {
@@ -57,6 +88,12 @@ namespace ProtocoleZero
 
         private void OnDisable()
         {
+            if (grabInteractable != null)
+            {
+                grabInteractable.activated.RemoveListener(OnGrabActivated);
+                grabInteractable.selectEntered.RemoveListener(OnSelected);
+            }
+
             if (activeAction == null)
             {
                 return;
@@ -72,6 +109,17 @@ namespace ProtocoleZero
             activeAction = null;
         }
 
+        private void OnGrabActivated(ActivateEventArgs args)
+        {
+            Toggle();
+            haptics?.PulseMedium("flashlight activate");
+        }
+
+        private void OnSelected(SelectEnterEventArgs args)
+        {
+            haptics?.PulseLight("flashlight grab");
+        }
+
         private void OnTogglePerformed(InputAction.CallbackContext context)
         {
             Toggle();
@@ -79,6 +127,11 @@ namespace ProtocoleZero
 
         private void Update()
         {
+            if (!enableGlobalInput)
+            {
+                return;
+            }
+
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null && keyboard[toggleKey].wasPressedThisFrame)
             {
@@ -101,6 +154,15 @@ namespace ProtocoleZero
             if (spotLight != null)
             {
                 spotLight.enabled = isOn;
+            }
+
+            if (stateRenderer != null)
+            {
+                stateRenderer.GetPropertyBlock(block);
+                Color c = isOn ? new Color(0.2f, 1f, 0.85f, 1f) : new Color(0.08f, 0.1f, 0.11f, 1f);
+                block.SetColor(BaseColorId, c);
+                block.SetColor(ColorId, c);
+                stateRenderer.SetPropertyBlock(block);
             }
         }
     }

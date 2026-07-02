@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 namespace ProtocoleZero
 {
@@ -27,10 +29,13 @@ namespace ProtocoleZero
         [SerializeField] private float stressAmount = 8f;
         [SerializeField] private float cooldownSeconds = 0.4f;
 
+        private XRSimpleInteractable simpleInteractable;
         private float cooldown;
 
         private void Awake()
         {
+            simpleInteractable = GetComponent<XRSimpleInteractable>();
+
             if (musicAnchor == null)
             {
                 musicAnchor = FindFirstObjectByType<MusicAnchorController>();
@@ -55,6 +60,27 @@ namespace ProtocoleZero
             {
                 audioFeedback = FindFirstObjectByType<AudioFeedbackRouter>();
             }
+        }
+
+        private void OnEnable()
+        {
+            if (simpleInteractable != null)
+            {
+                simpleInteractable.selectEntered.AddListener(HandleSelect);
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (simpleInteractable != null)
+            {
+                simpleInteractable.selectEntered.RemoveListener(HandleSelect);
+            }
+        }
+
+        private void HandleSelect(SelectEnterEventArgs args)
+        {
+            Activate();
         }
 
         private void Update()
