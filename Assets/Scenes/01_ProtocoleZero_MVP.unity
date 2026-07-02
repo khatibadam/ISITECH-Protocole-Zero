@@ -21188,7 +21188,7 @@ MonoBehaviour:
   toggleAction:
     m_UseReference: 0
     m_Action:
-      m_Name: 
+      m_Name: Toggle
       m_Type: 0
       m_ExpectedControlType: 
       m_Id: 5a9469f8-2047-4c12-938e-8f4d52aa20f7
@@ -47029,7 +47029,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: b660e982ee880c3459f9c9753cb97298, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.35
   m_Pitch: 1
   Loop: 1
   Mute: 0

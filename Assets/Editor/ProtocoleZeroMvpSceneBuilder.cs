@@ -135,6 +135,7 @@ namespace ProtocoleZero.EditorTools
             pcAudio.transform.position = new Vector3(-2.3f, 1.05f, -1.9f);
             AudioSource playlist = pcAudio.AddComponent<AudioSource>();
             playlist.loop = true;
+            playlist.volume = 0.35f;
             playlist.spatialBlend = 0f;
             playlist.playOnAwake = false;
             SetObj(music, "playlistSource", playlist);
