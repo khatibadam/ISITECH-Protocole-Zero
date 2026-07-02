@@ -167,6 +167,11 @@ namespace ProtocoleZero
                 return;
             }
 
+            if (block == null)
+            {
+                block = new MaterialPropertyBlock();
+            }
+
             Color color = selected ? selectedColor : unselectedColor;
             target.GetPropertyBlock(block);
             block.SetColor(BaseColorId, color);
