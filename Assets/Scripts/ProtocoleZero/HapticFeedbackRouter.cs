@@ -1,7 +1,11 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.XR;
 
 namespace ProtocoleZero
 {
+    // Fait vibrer les manettes VR (Oculus/Quest et HTC Vive via OpenXR).
+    // Toute manette qui supporte le rumble et actuellement connectee recoit l'impulsion.
     public sealed class HapticFeedbackRouter : MonoBehaviour
     {
         [SerializeField, Range(0f, 1f)] private float globalIntensity = 1f;
@@ -27,7 +31,20 @@ namespace ProtocoleZero
             amplitude = Mathf.Clamp01(amplitude * globalIntensity);
             if (logPlaceholderPulses)
             {
-                Debug.Log($"[Haptics placeholder] {label} amp={amplitude:0.00} duration={duration:0.00}");
+                Debug.Log($"[Haptics] {label} amp={amplitude:0.00} duration={duration:0.00}");
+            }
+
+            if (amplitude <= 0f || duration <= 0f)
+            {
+                return;
+            }
+
+            foreach (InputDevice device in InputSystem.devices)
+            {
+                if (device is XRControllerWithRumble rumble && device.added)
+                {
+                    rumble.SendImpulse(amplitude, duration);
+                }
             }
         }
     }

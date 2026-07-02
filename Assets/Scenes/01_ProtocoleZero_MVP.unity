@@ -21023,6 +21023,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1012777853}
+    - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2085564100}
     - targetCorrespondingSourceObject: {fileID: 1767192433, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1702215463}
@@ -21069,6 +21072,23 @@ MonoBehaviour:
   mouseSensitivity: 1.4
   interactDistance: 3
   lockCursorInPlay: 0
+--- !u!114 &2085564100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1012777851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5f9c3d4a7b86ea1bc2d3e4f5a6b7c83, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ProtocoleZero.FootstepAudio
+  footstepClip: {fileID: 8300000, guid: d4e8b2c3f6a75d90ab1c2d3e4f5a6b72, type: 3}
+  volume: 0.5
+  minSpeed: 0.3
+  teleportDelta: 0.75
+  fadeSpeed: 6
 --- !u!1 &1014461675
 GameObject:
   m_ObjectHideFlags: 0
@@ -21530,7 +21550,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProtocoleZero.AudioFeedbackRouter
   oneShotSource: {fileID: 1031704518}
   cableGrabClip: {fileID: 8300000, guid: 913d39a2c69efcd42aa5bdbb8f02108c, type: 3}
-  socketCorrectClip: {fileID: 8300000, guid: 153e4b97cb055484987a15c0611bbadd, type: 3}
+  socketCorrectClip: {fileID: 8300000, guid: c3f7a1d2e5b64c8f9a0d1b2c3e4f5a61, type: 3}
   socketWrongClip: {fileID: 8300000, guid: d5de6eb4bfde5724baca1628b43f6b2c, type: 3}
   pcWakeClip: {fileID: 8300000, guid: d783fea3e62636d4db802ec5afdab03b, type: 3}
   finalDoorOpenClip: {fileID: 8300000, guid: 554e989049c1cd843b8b0cdfc31bc558, type: 3}
