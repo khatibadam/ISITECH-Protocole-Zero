@@ -20,8 +20,11 @@ namespace ProtocoleZero
         [SerializeField] private Color lockedColor = new Color(0.1f, 1f, 0.35f);
         [SerializeField] private AudioFeedbackRouter audioFeedback;
         [SerializeField] private HapticFeedbackRouter haptics;
+        [Tooltip("Delai apres avoir lache le cable avant qu'il revienne a sa position de depart, s'il n'est ni tenu ni branche.")]
+        [SerializeField, Min(0f)] private float returnDelay = 1.5f;
 
         private Rigidbody body;
+        private float returnTimer = -1f;
         private XRGrabInteractable grabInteractable;
         private MaterialPropertyBlock feedbackBlock;
         private Vector3 startPosition;
@@ -59,6 +62,7 @@ namespace ProtocoleZero
             if (grabInteractable != null)
             {
                 grabInteractable.selectEntered.AddListener(HandleSelected);
+                grabInteractable.selectExited.AddListener(HandleReleased);
             }
         }
 
@@ -67,6 +71,33 @@ namespace ProtocoleZero
             if (grabInteractable != null)
             {
                 grabInteractable.selectEntered.RemoveListener(HandleSelected);
+                grabInteractable.selectExited.RemoveListener(HandleReleased);
+            }
+        }
+
+        // Cable lache dans le vide : apres un court delai (le temps qu'un socket proche
+        // puisse le happer), il revient a sa position de depart au lieu de s'envoler.
+        private void HandleReleased(SelectExitEventArgs args)
+        {
+            returnTimer = returnDelay;
+        }
+
+        private void Update()
+        {
+            if (returnTimer < 0f)
+            {
+                return;
+            }
+
+            returnTimer -= Time.deltaTime;
+            if (returnTimer >= 0f)
+            {
+                return;
+            }
+
+            if (!IsLocked && grabInteractable != null && grabInteractable.enabled && !grabInteractable.isSelected)
+            {
+                ResetPlug();
             }
         }
 
@@ -107,6 +138,7 @@ namespace ProtocoleZero
 
         private void HandleSelected(SelectEnterEventArgs args)
         {
+            returnTimer = -1f;
             PlayGrabFeedback();
         }
 
