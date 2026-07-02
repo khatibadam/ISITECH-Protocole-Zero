@@ -18,6 +18,8 @@ namespace ProtocoleZero
         private float pitch;
         private Vector3 lastMovedPosition;
         private bool hasMoved;
+        private Vector3 lastGroundedPosition;
+        private bool hasGroundedPosition;
 
         private void Awake()
         {
@@ -44,6 +46,7 @@ namespace ProtocoleZero
         private void Update()
         {
             SyncAfterExternalTeleport();
+            RescueIfFallenOutOfWorld();
             Move();
             Look();
             SnapTurn();
@@ -53,6 +56,29 @@ namespace ProtocoleZero
             {
                 TryInteract();
             }
+        }
+
+        // Safety net: if anything ever pushes the rig through the floor (accumulated
+        // gravity velocity + thin colliders), snap back to the last grounded spot
+        // instead of falling forever.
+        private void RescueIfFallenOutOfWorld()
+        {
+            if (transform.position.y > -5f)
+            {
+                if (controller.isGrounded)
+                {
+                    lastGroundedPosition = transform.position;
+                    hasGroundedPosition = true;
+                }
+
+                return;
+            }
+
+            Vector3 safe = hasGroundedPosition ? lastGroundedPosition : new Vector3(0f, 0.05f, -1.7f);
+            controller.enabled = false;
+            transform.position = new Vector3(safe.x, Mathf.Max(safe.y, 0.05f), safe.z);
+            controller.enabled = true;
+            Physics.SyncTransforms();
         }
 
         // XRI teleportation (XRBodyGroundPosition) writes the rig position directly on the
