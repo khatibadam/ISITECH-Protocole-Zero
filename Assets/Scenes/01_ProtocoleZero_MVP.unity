@@ -3244,7 +3244,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: f13bb1ca00bda20409d9167318eafe95, type: 3}
+  m_Resource: {fileID: 8300000, guid: f6a0c4d5b8e97fb2cd3e4f5a6b7c8d94, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -41927,6 +41927,9 @@ MonoBehaviour:
   - {fileID: 130353060}
   reevaluateInterval: 1.5
   hideDuringPuzzleGrace: 1
+  screamClip: {fileID: 8300000, guid: f6a0c4d5b8e97fb2cd3e4f5a6b7c8d94, type: 3}
+  screamVolume: 0.85
+  screamCooldown: 12
 --- !u!114 &1513729709
 MonoBehaviour:
   m_ObjectHideFlags: 0

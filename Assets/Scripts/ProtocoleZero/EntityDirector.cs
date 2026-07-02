@@ -10,10 +10,17 @@ namespace ProtocoleZero
         [SerializeField] private EntityAnchor[] anchors;
         [SerializeField] private float reevaluateInterval = 1.5f;
         [SerializeField] private bool hideDuringPuzzleGrace = true;
+        [Tooltip("Cri joue (spatialise 3D) quand l'entite apparait. Optionnel.")]
+        [SerializeField] private AudioClip screamClip;
+        [SerializeField, Range(0f, 1f)] private float screamVolume = 0.85f;
+        [Tooltip("Delai minimum entre deux cris pour ne pas hurler a chaque apparition.")]
+        [SerializeField] private float screamCooldown = 12f;
 
         private float reevaluateTimer;
         private float visibleTimer;
         private EntityAnchor currentAnchor;
+        private AudioSource screamSource;
+        private float lastScreamTime = float.NegativeInfinity;
 
         private void Awake()
         {
@@ -157,12 +164,41 @@ namespace ProtocoleZero
             if (entityVisual != null && entityVisual.activeSelf != visible)
             {
                 entityVisual.SetActive(visible);
+                if (visible)
+                {
+                    PlayScream();
+                }
             }
 
             if (!visible && currentAnchor != null)
             {
                 currentAnchor.ClearTell();
             }
+        }
+
+        private void PlayScream()
+        {
+            if (screamClip == null || Time.time - lastScreamTime < screamCooldown)
+            {
+                return;
+            }
+
+            // Source sur un GameObject dedie (pas sur l'entite) pour que le cri
+            // ne soit pas coupe quand l'entite redisparait.
+            if (screamSource == null)
+            {
+                var go = new GameObject("EntityScreamAudio");
+                screamSource = go.AddComponent<AudioSource>();
+                screamSource.playOnAwake = false;
+                screamSource.spatialBlend = 1f;
+                screamSource.rolloffMode = AudioRolloffMode.Linear;
+                screamSource.minDistance = 2f;
+                screamSource.maxDistance = 25f;
+            }
+
+            screamSource.transform.position = entityVisual.transform.position;
+            lastScreamTime = Time.time;
+            screamSource.PlayOneShot(screamClip, screamVolume);
         }
     }
 }
