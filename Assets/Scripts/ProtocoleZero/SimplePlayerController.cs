@@ -16,6 +16,8 @@ namespace ProtocoleZero
         private CharacterController controller;
         private XROrigin xrOrigin;
         private float pitch;
+        private Vector3 lastMovedPosition;
+        private bool hasMoved;
 
         private void Awake()
         {
@@ -41,6 +43,7 @@ namespace ProtocoleZero
 
         private void Update()
         {
+            SyncAfterExternalTeleport();
             Move();
             Look();
             SnapTurn();
@@ -49,6 +52,18 @@ namespace ProtocoleZero
             if (keyboard != null && keyboard.fKey.wasPressedThisFrame)
             {
                 TryInteract();
+            }
+        }
+
+        // XRI teleportation (XRBodyGroundPosition) writes the rig position directly on the
+        // Transform, but the CharacterController keeps its own cached physics position: our
+        // per-frame controller.Move() would snap the rig right back, silently cancelling every
+        // teleport. Push the external Transform change into the physics engine first.
+        private void SyncAfterExternalTeleport()
+        {
+            if (hasMoved && (transform.position - lastMovedPosition).sqrMagnitude > 0.0004f)
+            {
+                Physics.SyncTransforms();
             }
         }
 
@@ -84,6 +99,8 @@ namespace ProtocoleZero
             Vector3 motion = (fwd * input.z + right * input.x) * moveSpeed;
             motion.y = Physics.gravity.y * 0.15f;
             controller.Move(motion * Time.deltaTime);
+            lastMovedPosition = transform.position;
+            hasMoved = true;
         }
 
         // Yaw the rig WITHOUT translating it: rotate around the camera position so the
@@ -153,6 +170,27 @@ namespace ProtocoleZero
                 if (button != null)
                 {
                     button.Activate();
+                    return;
+                }
+
+                TutorialOptionButton tutorialButton = hit.collider.GetComponentInParent<TutorialOptionButton>();
+                if (tutorialButton != null)
+                {
+                    tutorialButton.Press();
+                    return;
+                }
+
+                ElevatorCallButton elevatorButton = hit.collider.GetComponentInParent<ElevatorCallButton>();
+                if (elevatorButton != null)
+                {
+                    elevatorButton.Press();
+                    return;
+                }
+
+                RestartGameButton restartButton = hit.collider.GetComponentInParent<RestartGameButton>();
+                if (restartButton != null)
+                {
+                    restartButton.Press();
                     return;
                 }
 
