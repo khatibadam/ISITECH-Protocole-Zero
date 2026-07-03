@@ -33,6 +33,9 @@ namespace ProtocoleZero
         private void OnEnable()
         {
             ResetTwitchTimer();
+            // Convulsion immediate a l'apparition : l'entite "sursaute" en meme temps
+            // que le cri au lieu de rester figee la premiere seconde.
+            twitchStrength = 1f;
         }
 
         private void Update()

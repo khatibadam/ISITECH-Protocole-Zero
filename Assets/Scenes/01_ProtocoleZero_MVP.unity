@@ -3271,7 +3271,7 @@ MonoBehaviour:
   triggerDistance: 3
   doorOpenOffset: {x: 0, y: -2.25, z: 0}
   openSpeed: 6
-  showSeconds: 1.6
+  showSeconds: 2.8
 --- !u!82 &164459045
 AudioSource:
   m_ObjectHideFlags: 0
@@ -42640,7 +42640,7 @@ MonoBehaviour:
   reevaluateInterval: 1.5
   hideDuringPuzzleGrace: 1
   screamClip: {fileID: 8300000, guid: f6a0c4d5b8e97fb2cd3e4f5a6b7c8d94, type: 3}
-  screamVolume: 0.85
+  screamVolume: 1
   screamCooldown: 12
 --- !u!114 &1513729709
 MonoBehaviour:
@@ -42655,7 +42655,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProtocoleZero.BatteryTimer
   batteryPercent: 97
-  fullDrainSeconds: 480
+  fullDrainSeconds: 300
   criticalThreshold: 18
   stressDirector: {fileID: 1513729706}
   subtitles: {fileID: 1513729712}
@@ -48618,8 +48618,8 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: b660e982ee880c3459f9c9753cb97298, type: 3}
-  m_PlayOnAwake: 1
+  m_Resource: {fileID: 8300000, guid: 9980e8bb85084a309ea5f3d4ae94d623, type: 3}
+  m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
   Loop: 1
@@ -63441,7 +63441,7 @@ Transform:
   m_GameObject: {fileID: 2127476721}
   serializedVersion: 2
   m_LocalRotation: {x: -0.000000006837968, y: 0.98768836, z: -0.15643448, w: -0.00000004317323}
-  m_LocalPosition: {x: 0, y: -0.55, z: 3.2}
+  m_LocalPosition: {x: 0, y: -0.8, z: 3.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -63457,7 +63457,7 @@ TextMesh:
   m_GameObject: {fileID: 2127476721}
   m_Text: 
   m_OffsetZ: 0
-  m_CharacterSize: 0.11
+  m_CharacterSize: 0.022
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1

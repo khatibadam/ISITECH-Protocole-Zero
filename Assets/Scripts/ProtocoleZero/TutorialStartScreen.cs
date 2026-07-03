@@ -14,6 +14,7 @@ namespace ProtocoleZero
         [SerializeField] private SubtitleManager subtitles;
         [SerializeField] private AudioFeedbackRouter audioFeedback;
         [SerializeField] private HapticFeedbackRouter haptics;
+        [SerializeField] private MusicAnchorController musicAnchor;
         [SerializeField] private Renderer teleportButtonRenderer;
         [SerializeField] private Renderer continuousButtonRenderer;
         [SerializeField] private Renderer bothButtonRenderer;
@@ -56,6 +57,11 @@ namespace ProtocoleZero
             if (haptics == null)
             {
                 haptics = FindFirstObjectByType<HapticFeedbackRouter>();
+            }
+
+            if (musicAnchor == null)
+            {
+                musicAnchor = FindFirstObjectByType<MusicAnchorController>();
             }
 
             if (boardRoot == null)
@@ -146,6 +152,8 @@ namespace ProtocoleZero
             started = true;
             audioFeedback?.PlayPcWake();
             haptics?.PulseMedium("tutorial start");
+            // Le vrai depart : la playlist du PC demarre a zero maintenant.
+            musicAnchor?.BeginRun();
 
             if (boardRoot != null)
             {

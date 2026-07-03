@@ -26,6 +26,7 @@ namespace ProtocoleZero
         private Rigidbody body;
         private float returnTimer = -1f;
         private XRGrabInteractable grabInteractable;
+        private Collider[] allColliders;
         private MaterialPropertyBlock feedbackBlock;
         private Vector3 startPosition;
         private Quaternion startRotation;
@@ -41,6 +42,7 @@ namespace ProtocoleZero
         {
             body = GetComponent<Rigidbody>();
             grabInteractable = GetComponent<XRGrabInteractable>();
+            allColliders = GetComponentsInChildren<Collider>(true);
             feedbackBlock = new MaterialPropertyBlock();
             if (audioFeedback == null)
             {
@@ -101,9 +103,73 @@ namespace ProtocoleZero
             }
         }
 
-        private void OnMouseDown()
+        /// <summary>
+        /// Prise en main clavier/souris (SimplePlayerController) : gele la physique et
+        /// coupe les colliders le temps du transport devant la camera, pour que le cable
+        /// ne bloque ni la marche ni le rayon d'interaction.
+        /// </summary>
+        public void BeginDesktopCarry()
         {
+            if (IsLocked)
+            {
+                return;
+            }
+
+            returnTimer = -1f;
+            if (grabInteractable != null)
+            {
+                grabInteractable.enabled = false;
+            }
+
+            if (body != null)
+            {
+                if (!body.isKinematic)
+                {
+                    body.linearVelocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
+                }
+
+                body.isKinematic = true;
+            }
+
+            SetCollidersEnabled(false);
             PlayGrabFeedback();
+        }
+
+        /// <summary>
+        /// Fin du transport clavier/souris. Si le cable n'a pas ete verrouille dans une
+        /// prise entre-temps, il revient a sa position de depart.
+        /// </summary>
+        public void EndDesktopCarry()
+        {
+            SetCollidersEnabled(true);
+            if (IsLocked)
+            {
+                return;
+            }
+
+            if (grabInteractable != null)
+            {
+                grabInteractable.enabled = true;
+            }
+
+            ResetPlug();
+        }
+
+        private void SetCollidersEnabled(bool value)
+        {
+            if (allColliders == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < allColliders.Length; i++)
+            {
+                if (allColliders[i] != null)
+                {
+                    allColliders[i].enabled = value;
+                }
+            }
         }
 
         /// <summary>Seat and freeze this plug on a socket. Called by the socket once accepted.</summary>

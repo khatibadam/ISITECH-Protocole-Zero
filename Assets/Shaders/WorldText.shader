@@ -1,13 +1,17 @@
-// Clone of the builtin "GUI/Text Shader" with ONE change: ZTest LEqual instead of
-// ZTest Always, so world-space TextMesh labels are properly hidden by walls.
-// Cull Off is kept on purpose: the project's anti-mirror recipe relies on
-// negative X scale, which flips the winding order.
+// Clone of the builtin "GUI/Text Shader" with TWO changes:
+// - ZTest LEqual instead of ZTest Always, so labels are hidden by walls.
+// - Cull exposed as a material property, so text is only readable from the
+//   front (no mirrored ghost text from behind). Some project texts use the
+//   negative-X-scale anti-mirror recipe, which flips the winding: those need
+//   Cull Front instead of Cull Back. WorldTextCulling.cs picks the right side
+//   per renderer at runtime.
 Shader "ProtocoleZero/World Text"
 {
     Properties
     {
         _MainTex ("Font Texture", 2D) = "white" {}
         _Color ("Text Color", Color) = (1,1,1,1)
+        _Cull ("Cull Mode (1=Front, 2=Back)", Float) = 2
     }
 
     SubShader
@@ -21,7 +25,7 @@ Shader "ProtocoleZero/World Text"
         }
 
         Lighting Off
-        Cull Off
+        Cull [_Cull]
         ZWrite Off
         ZTest LEqual
         Blend SrcAlpha OneMinusSrcAlpha

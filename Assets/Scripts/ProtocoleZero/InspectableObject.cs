@@ -17,6 +17,7 @@ namespace ProtocoleZero
         [SerializeField] private HapticFeedbackRouter haptics;
 
         private XRGrabInteractable grab;
+        private Coroutine desktopReveal;
 
         private void Awake()
         {
@@ -84,6 +85,39 @@ namespace ProtocoleZero
         {
             subtitles?.ShowLine(activateLine, 4f);
             haptics?.PulseMedium("inspect activate");
+        }
+
+        /// <summary>
+        /// Inspection clavier/souris (SimplePlayerController) : revele l'indice
+        /// quelques secondes sans avoir a saisir l'objet en VR.
+        /// </summary>
+        public void DesktopInspect(float seconds = 4f)
+        {
+            subtitles?.ShowLine(grabLine, seconds);
+            audioFeedback?.PlayCableGrab(transform.position);
+
+            if (revealWhenHeld == null)
+            {
+                return;
+            }
+
+            revealWhenHeld.gameObject.SetActive(true);
+            if (desktopReveal != null)
+            {
+                StopCoroutine(desktopReveal);
+            }
+
+            desktopReveal = StartCoroutine(HideRevealAfter(seconds));
+        }
+
+        private System.Collections.IEnumerator HideRevealAfter(float seconds)
+        {
+            yield return new WaitForSeconds(seconds);
+            desktopReveal = null;
+            if (revealWhenHeld != null && (grab == null || !grab.isSelected))
+            {
+                revealWhenHeld.gameObject.SetActive(false);
+            }
         }
     }
 }
