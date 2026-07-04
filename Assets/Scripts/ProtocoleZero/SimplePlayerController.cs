@@ -45,6 +45,8 @@ namespace ProtocoleZero
         private bool showHelp = true;
         private float helpTimer;
         private static GUIStyle overlayStyle;
+        private MusicAnchorController musicAnchor;
+        private float musicAnchorRetryAt;
 
         private struct InteractTarget
         {
@@ -287,6 +289,13 @@ namespace ProtocoleZero
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null)
             {
+                return;
+            }
+
+            // Sequence de mort : plus aucune interaction ni libelle contextuel.
+            if (ControlsLocked)
+            {
+                hoverLabel = null;
                 return;
             }
 
@@ -586,6 +595,15 @@ namespace ProtocoleZero
                 return;
             }
 
+            // Pendant un screamer ou la sequence de mort, l'ecran reste nu :
+            // aucun texte d'interface ne doit casser le choc.
+            if (CameraOverrideActive || ControlsLocked)
+            {
+                return;
+            }
+
+            DrawMusicBar();
+
             float cx = Screen.width * 0.5f;
             float cy = Screen.height * 0.5f;
 
@@ -619,6 +637,80 @@ namespace ProtocoleZero
             else
             {
                 DrawShadowLabel(new Rect(18f, Screen.height - 32f, 200f, 20f), "H : aide", 11, TextAnchor.LowerLeft);
+            }
+        }
+
+        // Jauge en haut de l'ecran : temps de musique restant avant la veille du PC.
+        // Verte puis orange puis rouge ; quand la musique dort, alerte rouge clignotante.
+        private void DrawMusicBar()
+        {
+            if (musicAnchor == null)
+            {
+                if (Time.unscaledTime < musicAnchorRetryAt)
+                {
+                    return;
+                }
+
+                musicAnchorRetryAt = Time.unscaledTime + 2f;
+                musicAnchor = FindFirstObjectByType<MusicAnchorController>();
+                if (musicAnchor == null)
+                {
+                    return;
+                }
+            }
+
+            // Rien avant le vrai depart de la partie (ecran tutoriel).
+            if (!musicAnchor.RunStarted)
+            {
+                return;
+            }
+
+            float width = Mathf.Min(320f, Screen.width * 0.4f);
+            const float height = 13f;
+            float x = (Screen.width - width) * 0.5f;
+            const float y = 14f;
+
+            float total = Mathf.Max(1f, musicAnchor.AwakeDurationSeconds);
+            float remaining = Mathf.Clamp(musicAnchor.RemainingSeconds, 0f, total);
+            float fill = musicAnchor.IsMusicAwake ? remaining / total : 0f;
+            bool blinkOn = Mathf.Repeat(Time.unscaledTime, 0.9f) < 0.55f;
+
+            Color previous = GUI.color;
+
+            // Fond sombre (cadre) toujours visible.
+            GUI.color = new Color(0f, 0f, 0f, 0.6f);
+            GUI.DrawTexture(new Rect(x - 2f, y - 2f, width + 4f, height + 4f), Texture2D.whiteTexture);
+
+            if (musicAnchor.IsMusicAwake && fill > 0f)
+            {
+                Color barColor = fill > 0.5f
+                    ? new Color(0.3f, 0.85f, 0.5f, 0.9f)
+                    : fill > 0.25f
+                        ? new Color(0.95f, 0.7f, 0.2f, 0.9f)
+                        : new Color(0.9f, 0.25f, 0.2f, 0.9f);
+
+                // Sous 15 % la barre clignote pour pousser au retour vers le PC.
+                if (fill >= 0.15f || blinkOn)
+                {
+                    GUI.color = barColor;
+                    GUI.DrawTexture(new Rect(x, y, width * fill, height), Texture2D.whiteTexture);
+                }
+            }
+            else if (!musicAnchor.IsMusicAwake && blinkOn)
+            {
+                // Musique en veille : la barre entiere pulse en rouge sombre.
+                GUI.color = new Color(0.75f, 0.15f, 0.12f, 0.55f);
+                GUI.DrawTexture(new Rect(x, y, width, height), Texture2D.whiteTexture);
+            }
+
+            GUI.color = previous;
+
+            string label = musicAnchor.IsMusicAwake
+                ? "MUSIQUE " + MissionTimer.Format(remaining)
+                : (blinkOn ? "MUSIQUE EN VEILLE - RELANCE-LA AU PC (PLAY)" : string.Empty);
+            if (!string.IsNullOrEmpty(label))
+            {
+                DrawShadowLabel(new Rect(x - 80f, y + height + 3f, width + 160f, 18f), label, 12, TextAnchor.UpperCenter, true);
             }
         }
 

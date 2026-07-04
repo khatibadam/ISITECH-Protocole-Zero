@@ -24,7 +24,7 @@ namespace ProtocoleZero
         [SerializeField] private MusicAnchorController musicAnchor;
         [Tooltip("Si l'entite touche le joueur : screamer + la partie redemarre.")]
         [SerializeField] private bool restartOnTouch = true;
-        [SerializeField, Min(0.2f)] private float touchRestartDelay = 2.2f;
+        [SerializeField, Min(0.2f)] private float touchRestartDelay = 3.2f;
 
         [Header("Chasse finale (batterie du PC vide)")]
         [SerializeField] private BatteryTimer batteryTimer;
@@ -341,8 +341,9 @@ namespace ProtocoleZero
                 screamSource.playOnAwake = false;
                 screamSource.spatialBlend = 1f;
                 screamSource.rolloffMode = AudioRolloffMode.Linear;
-                screamSource.minDistance = 2f;
-                screamSource.maxDistance = 25f;
+                screamSource.minDistance = 3.5f;
+                screamSource.maxDistance = 30f;
+                screamSource.priority = 0;
             }
 
             screamSource.transform.position = entityVisual.transform.position;

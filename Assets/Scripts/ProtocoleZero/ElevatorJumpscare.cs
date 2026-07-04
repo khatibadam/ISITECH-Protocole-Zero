@@ -25,13 +25,15 @@ namespace ProtocoleZero
 
         [Header("Expressivite de la silhouette")]
         [Tooltip("Distance de la ruee vers le joueur au moment du cri.")]
-        [SerializeField, Min(0f)] private float lungeDistance = 0.7f;
-        [SerializeField, Min(0.05f)] private float lungeSeconds = 0.3f;
+        [SerializeField, Min(0f)] private float lungeDistance = 1.05f;
+        [SerializeField, Min(0.05f)] private float lungeSeconds = 0.25f;
         [Tooltip("Amplitude des convulsions (degres).")]
-        [SerializeField, Min(0f)] private float shakeDegrees = 10f;
-        [SerializeField, Range(0f, 0.3f)] private float scalePulse = 0.06f;
+        [SerializeField, Min(0f)] private float shakeDegrees = 16f;
+        [SerializeField, Range(0f, 0.3f)] private float scalePulse = 0.09f;
         [SerializeField] private Color scareLightColor = new Color(0.95f, 0.25f, 0.14f);
-        [SerializeField, Min(0f)] private float scareLightIntensity = 2.4f;
+        [SerializeField, Min(0f)] private float scareLightIntensity = 3.4f;
+        [Tooltip("Secousse de la camera pendant le cri (PC uniquement), en degres.")]
+        [SerializeField, Range(0f, 6f)] private float cameraShakeDegrees = 2.2f;
 
         [Header("Zoom camera (PC uniquement, jamais en VR)")]
         [SerializeField] private bool desktopZoom = true;
@@ -63,6 +65,15 @@ namespace ProtocoleZero
         private bool chasing;
         private bool guarding;
 
+        private struct DuckedSource
+        {
+            public AudioSource Source;
+            public float Volume;
+        }
+
+        private readonly System.Collections.Generic.List<DuckedSource> duckedSources
+            = new System.Collections.Generic.List<DuckedSource>();
+
         private Camera zoomCamera;
         private bool zoomActive;
         private bool zoomRecovering;
@@ -93,7 +104,7 @@ namespace ProtocoleZero
 
                 // Le cri du stinger sert aussi de hurlement de mort pendant la
                 // chasse finale (le runner le joue plein volume, non spatialise).
-                contact.Configure(stinger != null ? stinger.clip : null, 1f, false, 2.2f, ReplayStinger);
+                contact.Configure(stinger != null ? stinger.clip : null, 1f, false, 3.2f, ReplayStinger);
             }
 
             if (batteryTimer == null)
@@ -188,14 +199,8 @@ namespace ProtocoleZero
                 CreateScareLight();
             }
 
-            if (stinger != null)
-            {
-                // Tres fort : c'est le sursaut principal du jeu.
-                stinger.volume = 1f;
-                stinger.Stop();
-                stinger.Play();
-            }
-
+            DuckWorldAudio();
+            PlayStingerLoud();
             BeginZoom();
         }
 
@@ -323,6 +328,7 @@ namespace ProtocoleZero
         {
             opening = false;
             guarding = true;
+            RestoreWorldAudio();
 
             // Le gardien ne disparait plus : il reprend sa pose et reste en
             // faction devant la porte ouverte (immobile, solide, toucher = cri).
@@ -349,11 +355,61 @@ namespace ProtocoleZero
 
         private void ReplayStinger()
         {
-            if (stinger != null)
+            PlayStingerLoud();
+        }
+
+        // Cri principal du jeu : source poussee au maximum (priorite haute, presque
+        // pas d'attenuation par la distance) et clip joue en double couche pour
+        // gagner en puissance percue sans saturer une seule source.
+        private void PlayStingerLoud()
+        {
+            if (stinger == null)
             {
-                stinger.Stop();
-                stinger.Play();
+                return;
             }
+
+            stinger.volume = 1f;
+            stinger.pitch = 1f;
+            stinger.priority = 0;
+            stinger.spatialBlend = Mathf.Min(stinger.spatialBlend, 0.3f);
+            stinger.minDistance = Mathf.Max(stinger.minDistance, 4f);
+            stinger.Stop();
+            stinger.Play();
+            if (stinger.clip != null)
+            {
+                stinger.PlayOneShot(stinger.clip, 0.9f);
+            }
+        }
+
+        // Ecrase les sons du monde pendant le cri pour que le sursaut domine tout,
+        // puis EndScare restaure les volumes d'origine.
+        private void DuckWorldAudio()
+        {
+            duckedSources.Clear();
+            AudioSource[] sources = FindObjectsByType<AudioSource>(FindObjectsSortMode.None);
+            for (int i = 0; i < sources.Length; i++)
+            {
+                if (sources[i] == null || sources[i] == stinger)
+                {
+                    continue;
+                }
+
+                duckedSources.Add(new DuckedSource { Source = sources[i], Volume = sources[i].volume });
+                sources[i].volume *= 0.2f;
+            }
+        }
+
+        private void RestoreWorldAudio()
+        {
+            for (int i = 0; i < duckedSources.Count; i++)
+            {
+                if (duckedSources[i].Source != null)
+                {
+                    duckedSources[i].Source.volume = duckedSources[i].Volume;
+                }
+            }
+
+            duckedSources.Clear();
         }
 
         private Vector3 ComputeFocusOffset()
@@ -424,6 +480,16 @@ namespace ProtocoleZero
                     Quaternion look = Quaternion.LookRotation(toFocus.normalized, Vector3.up);
                     float chase = 1f - Mathf.Exp(-10f * Time.deltaTime);
                     zoomCamera.transform.rotation = Quaternion.Slerp(zoomCamera.transform.rotation, look, chase);
+                }
+
+                // Secousse nerveuse qui s'estompe : vend le choc physiquement au joueur PC.
+                if (cameraShakeDegrees > 0f)
+                {
+                    float falloff = Mathf.Clamp01(1f - scareElapsed / Mathf.Max(0.5f, showSeconds));
+                    float amp = cameraShakeDegrees * falloff;
+                    float shakeYaw = (Mathf.PerlinNoise(noiseSeed + 21f, scareElapsed * 26f) - 0.5f) * 2f * amp;
+                    float shakePitch = (Mathf.PerlinNoise(noiseSeed + 34f, scareElapsed * 23f) - 0.5f) * 2f * amp;
+                    zoomCamera.transform.rotation *= Quaternion.Euler(shakePitch, shakeYaw, 0f);
                 }
 
                 float fovChase = 1f - Mathf.Exp(-7f * Time.deltaTime);

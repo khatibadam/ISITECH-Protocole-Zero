@@ -3271,7 +3271,7 @@ MonoBehaviour:
   triggerDistance: 3
   doorOpenOffset: {x: 0, y: -2.25, z: 0}
   openSpeed: 6
-  showSeconds: 2.8
+  showSeconds: 4.2
 --- !u!82 &164459045
 AudioSource:
   m_ObjectHideFlags: 0

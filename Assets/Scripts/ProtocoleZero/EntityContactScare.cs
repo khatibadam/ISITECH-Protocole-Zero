@@ -177,8 +177,10 @@ namespace ProtocoleZero
             go.transform.position = transform.position;
             var source = go.AddComponent<AudioSource>();
             source.playOnAwake = false;
-            source.spatialBlend = 0.4f;
+            source.spatialBlend = 0.3f;
+            source.priority = 0;
             source.PlayOneShot(screamClip, screamVolume);
+            source.PlayOneShot(screamClip, screamVolume * 0.7f);
             Destroy(go, screamClip.length + 0.5f);
         }
     }
@@ -215,12 +217,23 @@ namespace ProtocoleZero
             desktop = cam != null && !UnityEngine.XR.XRSettings.isDeviceActive;
 
             AudioSource screamSource = null;
+            AudioSource screamLayer = null;
             if (scream != null)
             {
+                // Double couche : le meme cri plein volume + une copie legerement
+                // ralentie (plus grave, plus longue) : plus epais, plus effrayant.
                 screamSource = gameObject.AddComponent<AudioSource>();
                 screamSource.playOnAwake = false;
                 screamSource.spatialBlend = 0f;
+                screamSource.priority = 0;
                 screamSource.PlayOneShot(scream, Mathf.Clamp01(volume));
+
+                screamLayer = gameObject.AddComponent<AudioSource>();
+                screamLayer.playOnAwake = false;
+                screamLayer.spatialBlend = 0f;
+                screamLayer.priority = 0;
+                screamLayer.pitch = 0.82f;
+                screamLayer.PlayOneShot(scream, Mathf.Clamp01(volume) * 0.85f);
             }
 
             // Musique coupee net et sons du monde ecrases : le cri prend toute la
@@ -234,7 +247,7 @@ namespace ProtocoleZero
             AudioSource[] sources = Object.FindObjectsByType<AudioSource>(FindObjectsSortMode.None);
             for (int i = 0; i < sources.Length; i++)
             {
-                if (sources[i] != null && sources[i] != screamSource)
+                if (sources[i] != null && sources[i] != screamSource && sources[i] != screamLayer)
                 {
                     sources[i].volume *= 0.15f;
                 }
@@ -294,7 +307,13 @@ namespace ProtocoleZero
                     cam.transform.rotation = Quaternion.Slerp(cam.transform.rotation, look, 1f - Mathf.Exp(-14f * Time.deltaTime));
                 }
 
-                cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, 30f, 1f - Mathf.Exp(-9f * Time.deltaTime));
+                // Secousse violente au depart qui s'attenue : le choc est physique.
+                float shakeAmp = 3.2f * Mathf.Clamp01(1f - elapsed / Mathf.Max(1f, delay));
+                float shakeYaw = (Mathf.PerlinNoise(noiseSeed + 17f, elapsed * 30f) - 0.5f) * 2f * shakeAmp;
+                float shakePitch = (Mathf.PerlinNoise(noiseSeed + 29f, elapsed * 27f) - 0.5f) * 2f * shakeAmp;
+                cam.transform.rotation *= Quaternion.Euler(shakePitch, shakeYaw, 0f);
+
+                cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, 26f, 1f - Mathf.Exp(-10f * Time.deltaTime));
             }
 
             if (elapsed >= delay)

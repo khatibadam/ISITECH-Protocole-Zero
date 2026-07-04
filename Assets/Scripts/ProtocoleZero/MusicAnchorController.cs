@@ -20,7 +20,13 @@ namespace ProtocoleZero
         private bool warned8;
 
         public bool IsMusicAwake => musicAwake;
-        public float RemainingSeconds => timer;
+        public float RemainingSeconds => Mathf.Max(0f, timer);
+
+        /// <summary>Vrai des que la partie (et donc le compte a rebours) a demarre.</summary>
+        public bool RunStarted => runStarted;
+
+        /// <summary>Duree totale d'eveil (longueur du morceau), pour les jauges d'interface.</summary>
+        public float AwakeDurationSeconds => AwakeSeconds;
 
         /// <summary>Duree cumulee depuis que la musique s'est arretee (0 quand elle joue).</summary>
         public float SleepingSeconds => sleepingSeconds;
